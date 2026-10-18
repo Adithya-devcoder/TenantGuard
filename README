@@ -1,246 +1,228 @@
-# 🛡️ TenantGuard
+# TenantGuard 🛡️
 ### Tenant-Safe Workspace Portal & API Security Scanner
 
-**Advantix Hackathon | IEEE Club**  
-**Track:** SaaS — Tenant-Safe Workspace Portal/API  
+**Advantix Hackathon | IEEE Club | SaaS Track**
+
 **Team:** CTRL ALT ELITE
 
----
-
-## 📌 Overview
-
-TenantGuard is a security-focused platform designed to protect tenant data in multi-tenant SaaS applications. It combines a tenant-safe workspace portal with an automated API security scanner to identify Broken Object Level Authorization (BOLA) vulnerabilities.
-
-TenantGuard aims to help developers detect unauthorized cross-tenant access, analyze security findings, and verify whether authorization fixes prevent data leaks.
+TenantGuard is a security-focused prototype designed to detect **Broken Object Level Authorization (BOLA)** vulnerabilities in multi-tenant SaaS applications. It tests whether a user from one tenant can access another tenant's protected data through API endpoints.
 
 ## 🚨 Problem Statement
 
-Multi-tenant SaaS applications allow multiple organizations to use the same software platform. If proper authorization checks are missing, a user from one organization may access, modify, or delete another organization's private data.
+Multi-tenant SaaS applications serve multiple customers using a shared application and database. If APIs do not correctly verify resource ownership, one customer may access another customer's invoices, customer records, or other confidential information by manipulating resource IDs.
 
-For example, a user belonging to Tenant A might manipulate an invoice ID in an API request to access an invoice belonging to Tenant B.
-
-This vulnerability, known as Broken Object Level Authorization (BOLA), can expose sensitive business information and damage customer trust.
+This vulnerability is known as **Broken Object Level Authorization (BOLA)** and can lead to unauthorized data exposure, data modification, and loss of customer trust.
 
 ## 💡 Our Solution
 
-TenantGuard provides a tenant-safe workspace portal and a security scanner that tests API endpoints for cross-tenant authorization weaknesses.
+TenantGuard combines a sample multi-tenant workspace application with an API security scanner.
 
-The platform is designed to:
+The workspace application provides tenant-specific users and invoice data. The scanner sends controlled cross-tenant requests to identify authorization failures, records supporting evidence, and generates a security report.
 
-- Enforce tenant-specific access controls.
-- Protect data using API authorization and PostgreSQL Row-Level Security (RLS).
-- Test API endpoints using different tenant identities.
-- Detect unauthorized access to protected resources.
-- Generate structured security reports with relevant evidence.
-- Provide remediation recommendations for detected vulnerabilities.
-- Verify whether fixes prevent unauthorized access.
+The prototype runs entirely on **one laptop**, using a local PostgreSQL database.
 
 ## 🎯 Target Users
 
-- **SaaS Companies:** Organizations that need to protect customer data across multiple tenants.
-- **Backend Developers:** Developers responsible for implementing and maintaining API authorization.
-- **Application Security Engineers:** Security professionals who test APIs for access-control vulnerabilities.
-- **Business Customers:** Organizations whose data must remain isolated from other customers using the same platform.
+- **SaaS companies:** Identify tenant-isolation weaknesses before releasing applications.
+- **Developers:** Test API authorization and fix vulnerabilities during development.
+- **Security teams:** Review cross-tenant access attempts and security findings.
+- **Business customers:** Benefit from stronger separation of their confidential data.
 
 ## ✨ Key Features
 
-### 1. Multi-Tenant Workspace
-Demonstrates separate workspaces for Tenant A and Tenant B, each containing its own sample records.
+- **Multi-Tenant Workspace:** Demonstrates separate tenants, users, and invoices.
+- **Tenant Isolation:** Backend authorization ensures users can access only permitted resources.
+- **BOLA Detection:** Tests whether Tenant A can access Tenant B's protected resources.
+- **API Security Testing:** Sends controlled requests against selected API endpoints.
+- **Evidence-Based Reports:** Records tested endpoints, HTTP responses, findings, and severity.
+- **Fix Verification:** Repeats a failed authorization test after a fix to confirm whether the issue is resolved.
+- **Security Dashboard:** Displays scan status and findings through a React-based interface.
 
-### 2. Tenant Isolation
-Uses tenant-aware authorization to restrict access to resources belonging to other tenants.
-
-### 3. Cross-Tenant Attack Engine
-Tests API endpoints using different tenant credentials to identify unauthorized resource access.
-
-### 4. OpenAPI Integration
-Uses API specifications to discover documented endpoints for security testing.
-
-### 5. Vulnerability Reports
-Displays tested endpoints, HTTP methods, observed responses, findings, and relevant evidence.
-
-### 6. AI-Assisted Fix Suggestions
-Provides remediation recommendations for identified authorization weaknesses.
-
-### 7. Tenant Isolation Score
-Summarizes the results of tenant-isolation tests using a defined scoring method.
-
-### 8. CI Security Guard
-Planned integration with GitHub Actions to help prevent vulnerable changes from passing security checks.
-
-*Feature availability depends on the functionality implemented in the submitted prototype.*
+**Planned enhancements:** OpenAPI specification discovery, PostgreSQL Row-Level Security (RLS), AI-assisted remediation suggestions, isolation scoring, and GitHub Actions integration.
 
 ## 🔄 How It Works
 
-1. Configure a test application with Tenant A and Tenant B.
-2. Authenticate the tenant users and create separate sample records.
-3. Load the API specification when supported.
-4. Run cross-tenant authorization tests against the configured endpoints.
-5. Analyze the responses to determine whether unauthorized data was exposed.
-6. Generate a security report with findings and evidence.
-7. Apply the necessary authorization fix.
-8. Repeat the tests to verify that unauthorized access is blocked while legitimate access continues to work.
+1. Start the frontend, backend, and local PostgreSQL database.
+2. Create or load sample data for Tenant A and Tenant B.
+3. Authenticate test users belonging to the separate tenants.
+4. Run TenantGuard against the backend API.
+5. Attempt controlled cross-tenant access using the test accounts.
+6. Analyze the responses to identify potential authorization failures.
+7. Display the findings and evidence in the dashboard.
+8. Apply a fix and rerun the test to verify the result.
 
 ## 🏗️ System Architecture
 
-### Frontend
-- React
-- Vite
-- Tailwind CSS
-- Recharts
+```text
+                 React Frontend
+                       |
+                       v
+                 FastAPI Backend
+                       |
+             Authentication & Authorization
+                       |
+                       v
+               Local PostgreSQL
+             /                     \
+       Tenant A Data           Tenant B Data
+                       ^
+                       |
+               TenantGuard Scanner
+                       |
+              HTTP API Requests
+                       |
+                       v
+               Security Report
+```
 
-### Backend
-- Python
-- FastAPI
-- JWT Authentication
-- SQLAlchemy
-
-### Database and Storage
-- PostgreSQL
-- PostgreSQL Row-Level Security (RLS)
-- Redis
-- MinIO
-
-### Security Scanner and AI
-- Python `httpx` for asynchronous HTTP requests
-- OpenAPI specification parser
-- Gemini API for AI-assisted remediation
-
-### DevOps and Deployment
-- Docker
-- Docker Compose
-- GitHub Actions
-- Render
-
-*The technology list describes the planned architecture. Refer to the actual source code and setup instructions for implemented components.*
-
-## 🧪 Example Security Test
-
-Consider an invoicing application used by two organizations.
-
-| Test Scenario | Expected Outcome |
-|---|---|
-| Tenant A accesses its own invoice | Access allowed |
-| Tenant B accesses its own invoice | Access allowed |
-| Tenant A requests Tenant B's invoice | Access denied |
-| Scanner tests a deliberately vulnerable endpoint | Unauthorized access is reported if a data leak is confirmed |
-| Scanner retests the endpoint after remediation | Unauthorized access is blocked |
-
-The scanner must verify whether protected data was actually disclosed rather than treating every successful HTTP response as a vulnerability.
+The scanner communicates with the application through HTTP APIs. It does not need direct database access to test authorization.
 
 ## 🛠️ Technology Stack
 
-| Component | Technology |
+| Component | Technologies |
 |---|---|
 | Frontend | React, Vite, Tailwind CSS |
 | Backend | Python, FastAPI |
-| Authentication | JWT |
 | Database | PostgreSQL |
-| Database Security | Row-Level Security |
 | ORM | SQLAlchemy |
-| API Scanner | Python, HTTPX |
+| Authentication | JWT-based authentication |
+| Security Scanner | Python, HTTPX |
 | API Specification | OpenAPI |
-| AI Assistance | Gemini API |
-| Caching | Redis |
-| File Storage | MinIO |
-| Containerization | Docker |
-| CI/CD | GitHub Actions |
-| Deployment | Render |
+| Testing | Pytest, FastAPI TestClient |
+| Development Tools | Git, GitHub, VS Code |
+| Optional Enhancements | PostgreSQL RLS, Docker Compose, GitHub Actions, AI-assisted remediation |
 
-## 🚀 Getting Started
+## 🗄️ Database Design
+
+The prototype uses a locally installed PostgreSQL database named `tenantguard`.
+
+Core entities include:
+
+- **Tenants:** Represents separate customer organizations.
+- **Users:** Associates authenticated users with tenants.
+- **Invoices:** Stores sample invoice data associated with a tenant.
+- **Scan Reports:** Stores security scan summaries and findings.
+
+Each tenant's records must be protected by backend authorization. PostgreSQL RLS can provide an additional database-level security layer when correctly configured.
+
+## 🔍 Example Security Test
+
+Suppose Tenant A owns invoice `101`, while Tenant B owns invoice `202`.
+
+| Test | Expected Result |
+|---|---|
+| Tenant A accesses invoice `101` | Allowed |
+| Tenant A accesses invoice `202` | Denied |
+| Tenant B accesses invoice `202` | Allowed |
+| Tenant B accesses invoice `101` | Denied |
+
+If Tenant A receives Tenant B's protected invoice data, TenantGuard should flag a potential BOLA vulnerability and include the request and response evidence in the report.
+
+A denial response alone is not sufficient proof that every authorization path is secure; tests should cover the relevant operations and resource types.
+
+## 🚀 Running the Prototype
 
 ### Prerequisites
 
-- Python
+- Python 3.10 or later
 - Node.js and npm
 - PostgreSQL
 - Git
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Adithya-devcoder/TenantGuard.git
 cd TenantGuard
 ```
 
-### 2. Configure the Environment
+### 2. Create the PostgreSQL database
 
-Create a local environment file using the provided `.env.example`, if available.
+Create a database named `tenantguard` using PostgreSQL or pgAdmin.
 
-Configure the required database connection, authentication secrets, and optional API keys.
+Configure the backend's database connection in its environment configuration. Use the actual variable names defined in the project.
 
-Never commit real credentials or secrets to GitHub.
+### 3. Start the backend
 
-### 3. Start the Backend
-
-Follow the backend setup instructions and install the dependencies listed in its requirements file.
-
-For a FastAPI application, the general startup command is:
+After installing the backend dependencies and configuring the environment:
 
 ```bash
-uvicorn <APP_MODULE>:app --reload
+cd backend
+python -m venv .venv
 ```
 
-Replace `<APP_MODULE>` with the actual Python module containing the FastAPI application.
+Activate the virtual environment on Windows:
 
-### 4. Start the Frontend
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-Navigate to the frontend directory and install the dependencies:
+Install dependencies:
 
 ```bash
+pip install -r requirements.txt
+```
+
+Start the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+If the backend entry point differs, use the corresponding module path from the implementation.
+
+Open the API documentation at:
+
+`http://127.0.0.1:8000/docs`
+
+### 4. Start the frontend
+
+Open a separate terminal:
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-Use the actual frontend directory and scripts defined in the project.
+Open the local URL printed by Vite, usually:
 
-### 5. Configure the Database
+`http://localhost:5173`
 
-Set up PostgreSQL, apply the database schema and migrations, create the sample tenant records, and configure the required security policies.
+### 5. Run the scanner
 
-### 6. Run the Scanner
+Install the scanner dependencies and run the scanner using the command provided by the implemented scanner module. Configure it to target the local backend API.
 
-Use the scanner interface or documented command to run tests against an authorized test environment.
-
-Refer to the repository's implementation and setup instructions for the exact configuration and execution commands.
+**Note:** The commands above assume the corresponding folders, dependency files, and entry points exist. Update them to match the final repository implementation before publishing the README.
 
 ## 🔐 Security Principles
 
-- Authenticate users before allowing access to protected resources.
-- Derive tenant identity from a trusted authentication context.
-- Validate resource-level authorization for every protected operation.
-- Apply database-level tenant isolation where configured.
-- Avoid exposing protected data in error responses or scan reports.
-- Store credentials and API secrets securely.
-- Use controlled test environments and synthetic data for security demonstrations.
-- Scan only systems for which explicit authorization has been obtained.
+- Derive tenant identity from trusted authentication context, not an untrusted request-body field.
+- Check resource-level authorization for every protected operation.
+- Never expose real customer data during demonstrations.
+- Use synthetic data for cross-tenant security tests.
+- Keep passwords, JWT secrets, database credentials, and API keys out of GitHub.
+- Store local configuration in environment variables and commit only example configuration files.
+- Run security tests only against applications and environments you own or have permission to test.
 
-## 📈 Future Scope
+## 🔮 Future Scope
 
-- Broader API endpoint discovery and testing.
-- Additional HTTP method coverage.
-- Improved hidden-path and undocumented endpoint checks.
-- More detailed vulnerability severity analysis.
+- Automatic endpoint discovery from OpenAPI specifications.
+- Expanded testing for GET, POST, PUT, PATCH, and DELETE operations.
+- PostgreSQL Row-Level Security enforcement and verification.
+- Detection of tenant leaks through file downloads, exports, and cached responses.
 - AI-assisted remediation recommendations.
-- Isolation scoring with clearly defined metrics.
-- GitHub Actions security regression checks.
-- Support for GraphQL and additional API formats.
-- Expanded security reporting and compliance support.
+- Security scoring and continuous integration checks.
+- Support for additional API patterns, including GraphQL.
 
 ## 👥 Team CTRL ALT ELITE
 
-- Adithya S
-- Akhil Kumaran
-- Balaji S
+- **Adithya S** — Security Scanner and BOLA Testing
+- **Akhil Kumaran** — Backend and Tenant Authorization
+- **Balaji S** — Frontend and Security Dashboard
 
-## 🏆 Hackathon
+## 🏆 Hackathon Objective
 
-Developed for the **Advantix Hackathon**, organized by the IEEE Club of our college.
+Our goal is to demonstrate how automated, evidence-based API security testing can help developers identify and fix cross-tenant authorization vulnerabilities before they reach production.
 
-## 📄 License
-
-Add a license if the team decides to distribute the project under an open-source license.
-
----
-
-**TenantGuard — Detect cross-tenant access risks. Protect organizational data. Verify security fixes.**
+**TenantGuard — Test tenant boundaries. Detect data leaks. Verify the fix.**
