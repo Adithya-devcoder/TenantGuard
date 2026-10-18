@@ -1,0 +1,246 @@
+# 🛡️ TenantGuard
+### Tenant-Safe Workspace Portal & API Security Scanner
+
+**Advantix Hackathon | IEEE Club**  
+**Track:** SaaS — Tenant-Safe Workspace Portal/API  
+**Team:** CTRL ALT ELITE
+
+---
+
+## 📌 Overview
+
+TenantGuard is a security-focused platform designed to protect tenant data in multi-tenant SaaS applications. It combines a tenant-safe workspace portal with an automated API security scanner to identify Broken Object Level Authorization (BOLA) vulnerabilities.
+
+TenantGuard aims to help developers detect unauthorized cross-tenant access, analyze security findings, and verify whether authorization fixes prevent data leaks.
+
+## 🚨 Problem Statement
+
+Multi-tenant SaaS applications allow multiple organizations to use the same software platform. If proper authorization checks are missing, a user from one organization may access, modify, or delete another organization's private data.
+
+For example, a user belonging to Tenant A might manipulate an invoice ID in an API request to access an invoice belonging to Tenant B.
+
+This vulnerability, known as Broken Object Level Authorization (BOLA), can expose sensitive business information and damage customer trust.
+
+## 💡 Our Solution
+
+TenantGuard provides a tenant-safe workspace portal and a security scanner that tests API endpoints for cross-tenant authorization weaknesses.
+
+The platform is designed to:
+
+- Enforce tenant-specific access controls.
+- Protect data using API authorization and PostgreSQL Row-Level Security (RLS).
+- Test API endpoints using different tenant identities.
+- Detect unauthorized access to protected resources.
+- Generate structured security reports with relevant evidence.
+- Provide remediation recommendations for detected vulnerabilities.
+- Verify whether fixes prevent unauthorized access.
+
+## 🎯 Target Users
+
+- **SaaS Companies:** Organizations that need to protect customer data across multiple tenants.
+- **Backend Developers:** Developers responsible for implementing and maintaining API authorization.
+- **Application Security Engineers:** Security professionals who test APIs for access-control vulnerabilities.
+- **Business Customers:** Organizations whose data must remain isolated from other customers using the same platform.
+
+## ✨ Key Features
+
+### 1. Multi-Tenant Workspace
+Demonstrates separate workspaces for Tenant A and Tenant B, each containing its own sample records.
+
+### 2. Tenant Isolation
+Uses tenant-aware authorization to restrict access to resources belonging to other tenants.
+
+### 3. Cross-Tenant Attack Engine
+Tests API endpoints using different tenant credentials to identify unauthorized resource access.
+
+### 4. OpenAPI Integration
+Uses API specifications to discover documented endpoints for security testing.
+
+### 5. Vulnerability Reports
+Displays tested endpoints, HTTP methods, observed responses, findings, and relevant evidence.
+
+### 6. AI-Assisted Fix Suggestions
+Provides remediation recommendations for identified authorization weaknesses.
+
+### 7. Tenant Isolation Score
+Summarizes the results of tenant-isolation tests using a defined scoring method.
+
+### 8. CI Security Guard
+Planned integration with GitHub Actions to help prevent vulnerable changes from passing security checks.
+
+*Feature availability depends on the functionality implemented in the submitted prototype.*
+
+## 🔄 How It Works
+
+1. Configure a test application with Tenant A and Tenant B.
+2. Authenticate the tenant users and create separate sample records.
+3. Load the API specification when supported.
+4. Run cross-tenant authorization tests against the configured endpoints.
+5. Analyze the responses to determine whether unauthorized data was exposed.
+6. Generate a security report with findings and evidence.
+7. Apply the necessary authorization fix.
+8. Repeat the tests to verify that unauthorized access is blocked while legitimate access continues to work.
+
+## 🏗️ System Architecture
+
+### Frontend
+- React
+- Vite
+- Tailwind CSS
+- Recharts
+
+### Backend
+- Python
+- FastAPI
+- JWT Authentication
+- SQLAlchemy
+
+### Database and Storage
+- PostgreSQL
+- PostgreSQL Row-Level Security (RLS)
+- Redis
+- MinIO
+
+### Security Scanner and AI
+- Python `httpx` for asynchronous HTTP requests
+- OpenAPI specification parser
+- Gemini API for AI-assisted remediation
+
+### DevOps and Deployment
+- Docker
+- Docker Compose
+- GitHub Actions
+- Render
+
+*The technology list describes the planned architecture. Refer to the actual source code and setup instructions for implemented components.*
+
+## 🧪 Example Security Test
+
+Consider an invoicing application used by two organizations.
+
+| Test Scenario | Expected Outcome |
+|---|---|
+| Tenant A accesses its own invoice | Access allowed |
+| Tenant B accesses its own invoice | Access allowed |
+| Tenant A requests Tenant B's invoice | Access denied |
+| Scanner tests a deliberately vulnerable endpoint | Unauthorized access is reported if a data leak is confirmed |
+| Scanner retests the endpoint after remediation | Unauthorized access is blocked |
+
+The scanner must verify whether protected data was actually disclosed rather than treating every successful HTTP response as a vulnerability.
+
+## 🛠️ Technology Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | React, Vite, Tailwind CSS |
+| Backend | Python, FastAPI |
+| Authentication | JWT |
+| Database | PostgreSQL |
+| Database Security | Row-Level Security |
+| ORM | SQLAlchemy |
+| API Scanner | Python, HTTPX |
+| API Specification | OpenAPI |
+| AI Assistance | Gemini API |
+| Caching | Redis |
+| File Storage | MinIO |
+| Containerization | Docker |
+| CI/CD | GitHub Actions |
+| Deployment | Render |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python
+- Node.js and npm
+- PostgreSQL
+- Git
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Adithya-devcoder/TenantGuard.git
+cd TenantGuard
+```
+
+### 2. Configure the Environment
+
+Create a local environment file using the provided `.env.example`, if available.
+
+Configure the required database connection, authentication secrets, and optional API keys.
+
+Never commit real credentials or secrets to GitHub.
+
+### 3. Start the Backend
+
+Follow the backend setup instructions and install the dependencies listed in its requirements file.
+
+For a FastAPI application, the general startup command is:
+
+```bash
+uvicorn <APP_MODULE>:app --reload
+```
+
+Replace `<APP_MODULE>` with the actual Python module containing the FastAPI application.
+
+### 4. Start the Frontend
+
+Navigate to the frontend directory and install the dependencies:
+
+```bash
+npm install
+npm run dev
+```
+
+Use the actual frontend directory and scripts defined in the project.
+
+### 5. Configure the Database
+
+Set up PostgreSQL, apply the database schema and migrations, create the sample tenant records, and configure the required security policies.
+
+### 6. Run the Scanner
+
+Use the scanner interface or documented command to run tests against an authorized test environment.
+
+Refer to the repository's implementation and setup instructions for the exact configuration and execution commands.
+
+## 🔐 Security Principles
+
+- Authenticate users before allowing access to protected resources.
+- Derive tenant identity from a trusted authentication context.
+- Validate resource-level authorization for every protected operation.
+- Apply database-level tenant isolation where configured.
+- Avoid exposing protected data in error responses or scan reports.
+- Store credentials and API secrets securely.
+- Use controlled test environments and synthetic data for security demonstrations.
+- Scan only systems for which explicit authorization has been obtained.
+
+## 📈 Future Scope
+
+- Broader API endpoint discovery and testing.
+- Additional HTTP method coverage.
+- Improved hidden-path and undocumented endpoint checks.
+- More detailed vulnerability severity analysis.
+- AI-assisted remediation recommendations.
+- Isolation scoring with clearly defined metrics.
+- GitHub Actions security regression checks.
+- Support for GraphQL and additional API formats.
+- Expanded security reporting and compliance support.
+
+## 👥 Team CTRL ALT ELITE
+
+- Adithya S
+- Akhil Kumaran
+- Balaji S
+
+## 🏆 Hackathon
+
+Developed for the **Advantix Hackathon**, organized by the IEEE Club of our college.
+
+## 📄 License
+
+Add a license if the team decides to distribute the project under an open-source license.
+
+---
+
+**TenantGuard — Detect cross-tenant access risks. Protect organizational data. Verify security fixes.**
