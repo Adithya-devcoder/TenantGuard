@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #F0F2F5;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F8FAFC;
+  --color-border: #E1E7EF;
+  --color-border-subtle: #EEF2F7;
+
+  --color-text-primary: #0D1526;
+  --color-text-secondary: #52637A;
+  --color-text-muted: #8A9BB0;
+
+  --color-brand: #1D4ED8;
+  --color-brand-hover: #1A3FC4;
+  --color-brand-light: #EFF4FF;
+  --color-brand-mid: #DBEAFE;
+
+  --color-navy: #07111F;
+  --color-navy-mid: #0C1A2E;
+  --color-navy-border: #162035;
+
+  --color-emerald: #059669;
+  --color-emerald-bg: #ECFDF5;
+  --color-emerald-border: #A7F3D0;
+  --color-emerald-text: #065F46;
+
+  --color-amber: #D97706;
+  --color-amber-bg: #FFFBEB;
+  --color-amber-border: #FDE68A;
+  --color-amber-text: #92400E;
+
+  --color-rose: #DC2626;
+  --color-rose-bg: #FFF1F2;
+  --color-rose-border: #FECDD3;
+  --color-rose-text: #9F1239;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C8D3E0;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9BAAB8;
+}
+
+/* Sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #1E2D45;
+}
+
+/* Utility classes */
+.font-mono {
+  font-family: var(--font-mono);
+}
