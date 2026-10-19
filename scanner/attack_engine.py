@@ -86,7 +86,7 @@ def run_bola_tests(scan_request: Any) -> list[Any]:
     # Normalise: accept both ScanRequest (Pydantic) and ScannerConfig (dataclass)
     if hasattr(scan_request, "model_dump"):
         data = scan_request.model_dump()
-        cfg = ScannerConfig(**{k: data[k] for k in ScannerConfig.__dataclass_fields__})  # type: ignore[attr-defined]
+        cfg = ScannerConfig(**{k: data[k] for k in ScannerConfig.__dataclass_fields__ if k in data})  # type: ignore[attr-defined]
     else:
         cfg = scan_request  # already a ScannerConfig
 

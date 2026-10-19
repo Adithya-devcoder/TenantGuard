@@ -153,7 +153,7 @@ def seed_data() -> None:
             print("[init_db] Created Invoice 203 (Tenant B)")
 
         db.commit()
-        print("\n[init_db] ✅ Seed data committed successfully.")
+        print("\n[init_db] [OK] Seed data committed successfully.")
         print(f"  Tenant A user : tenant_a_user  (password from TENANT_A_DEMO_PASSWORD)")
         print(f"  Tenant B user : tenant_b_user  (password from TENANT_B_DEMO_PASSWORD)")
         print(f"  Tenant A invoices : 101, 102")
@@ -161,7 +161,7 @@ def seed_data() -> None:
 
     except Exception as exc:
         db.rollback()
-        print(f"[init_db] ❌ Error during seed: {exc}", file=sys.stderr)
+        print(f"[init_db] [ERROR] Error during seed: {exc}", file=sys.stderr)
         raise
     finally:
         db.close()

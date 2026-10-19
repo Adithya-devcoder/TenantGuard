@@ -3,8 +3,9 @@ fastapi==0.133.1
 uvicorn[standard]==0.41.0
 
 # ── Database ─────────────────────────────────────────────────────────────────
-sqlalchemy==2.0.36
-psycopg[binary]==3.2.3          # PostgreSQL 18 adapter (psycopg3)
+sqlalchemy==2.1.5               # updated from 2.0.36 to match installed version
+psycopg[binary]==3.2.3          # PostgreSQL 18 adapter (psycopg3); now installed
+# SQLite is built-in and used as the local-dev fallback (DATABASE_URL=sqlite:///./demo.db)
 
 # ── Validation / Settings ────────────────────────────────────────────────────
 pydantic==2.13.4

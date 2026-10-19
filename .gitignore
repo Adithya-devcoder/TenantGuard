@@ -42,3 +42,7 @@ dist/
 # ── OS ───────────────────────────────────────────────────────────────────────
 Thumbs.db
 .DS_Store
+
+# Local SQLite database files
+backend/*.db
+backend/*.db-*

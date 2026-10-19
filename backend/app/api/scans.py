@@ -65,13 +65,20 @@ def run_scan(
     """
     _assert_local_url(body.target_base_url)
 
-    # Import here to avoid circular imports at module load time
+    # Import here to avoid circular imports at module load time.
+    # Ensure the repo root (parent of backend/) is on sys.path so the
+    # top-level `scanner` package can always be found.
+    import sys as _sys
+    import pathlib as _pathlib
+    _repo_root = str(_pathlib.Path(__file__).resolve().parents[3])
+    if _repo_root not in _sys.path:
+        _sys.path.insert(0, _repo_root)
     from scanner.attack_engine import run_bola_tests  # type: ignore[import]
 
     report_id = f"scan-{uuid.uuid4().hex[:8]}"
 
     try:
-        results: list[ScanResult] = run_bola_tests(body)
+        raw_results = run_bola_tests(body)
     except Exception as exc:
         # Scanner error should not expose internals
         raise HTTPException(
@@ -79,15 +86,16 @@ def run_scan(
             detail=f"Scanner encountered an error: {exc!s}",
         )
 
-    vulns = sum(1 for r in results if r.outcome.value == "vulnerable")
+    scan_results = [r if isinstance(r, ScanResult) else ScanResult(**r) for r in raw_results]
+    vulns = sum(1 for r in scan_results if (r.outcome.value if hasattr(r.outcome, "value") else str(r.outcome)) == "vulnerable")
 
     # ── Persist report ────────────────────────────────────────────────────────
     report_row = ScanReport(
         id=report_id,
         status="completed",
-        total_tests=len(results),
+        total_tests=len(scan_results),
         vulnerabilities_found=vulns,
-        results=[r.model_dump() for r in results],
+        results=[r.model_dump() for r in scan_results],
     )
     db.add(report_row)
     db.commit()
@@ -95,8 +103,35 @@ def run_scan(
     return ScanResponse(
         report_id=report_id,
         status="completed",
-        total_tests=len(results),
+        total_tests=len(scan_results),
         vulnerabilities_found=vulns,
+        results=scan_results,
+    )
+
+
+@router.get(
+    "/reports/latest",
+    response_model=ScanResponse,
+    summary="Retrieve the most recent scan report",
+)
+def get_latest_report(db: Session = Depends(get_db)) -> ScanResponse:
+    """Return the most recently executed scan report, or 404 if none exist."""
+    row: ScanReport | None = (
+        db.query(ScanReport).order_by(ScanReport.created_at.desc()).first()
+    )
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No scan reports recorded yet.",
+        )
+
+    results = [ScanResult(**r) for r in (row.results or [])]
+
+    return ScanResponse(
+        report_id=row.id,
+        status=row.status,
+        total_tests=row.total_tests,
+        vulnerabilities_found=row.vulnerabilities_found,
         results=results,
     )
 
