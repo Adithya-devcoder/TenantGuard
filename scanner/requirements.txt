@@ -1,0 +1,9 @@
+# scanner/requirements.txt
+# Scanner module dependencies.
+# The scanner is run from the backend/ venv — these packages are already
+# included in backend/requirements.txt. This file is provided for reference
+# if the scanner is ever run as a standalone tool.
+
+httpx==0.28.1
+pydantic==2.13.4
+pytest==8.3.4
