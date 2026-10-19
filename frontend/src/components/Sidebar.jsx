@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
+import { checkBackendConnection } from '../services/api'
 import {
   Shield,
   LayoutDashboard,
@@ -48,6 +50,27 @@ const navGroups = [
 ]
 
 export default function Sidebar({ onClose }) {
+  const [backendStatus, setBackendStatus] = useState('checking') // 'checking' | 'online' | 'offline'
+
+  useEffect(() => {
+    let mounted = true
+    const check = async () => {
+      try {
+        const res = await checkBackendConnection()
+        if (mounted) {
+          setBackendStatus(res.connected && res.status === 'ok' ? 'online' : 'offline')
+        }
+      } catch {
+        if (mounted) setBackendStatus('offline')
+      }
+    }
+    check()
+    const interval = setInterval(check, 15000)
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
+  }, [])
   return (
     <aside className="w-64 flex flex-col h-full flex-shrink-0 select-none" style={{ background: '#07111F' }}>
       {/* Brand Header */}
@@ -165,20 +188,49 @@ export default function Sidebar({ onClose }) {
           style={{ background: '#0C1A2E' }}
         >
           <div className="flex items-center gap-2.5">
-            <Server className="h-3.5 w-3.5" style={{ color: '#4A6080' }} />
+            <Server
+              className="h-3.5 w-3.5"
+              style={{
+                color: backendStatus === 'online' ? '#10B981' : backendStatus === 'checking' ? '#94A3B8' : '#F43F5E',
+              }}
+            />
             <div className="flex flex-col">
               <span className="text-[12px] font-medium" style={{ color: '#7A90A8' }}>
                 FastAPI Backend
               </span>
-              <span className="text-[10px]" style={{ color: '#3D5070', fontFamily: 'var(--font-mono)' }}>
-                Awaiting connection
+              <span
+                className="text-[10px] font-mono"
+                style={{
+                  color: backendStatus === 'online' ? '#10B981' : backendStatus === 'checking' ? '#94A3B8' : '#F43F5E',
+                }}
+              >
+                {backendStatus === 'online'
+                  ? 'Online · Connected'
+                  : backendStatus === 'checking'
+                  ? 'Checking connection...'
+                  : 'Offline · Disconnected'}
               </span>
             </div>
           </div>
           <span
-            className="h-2 w-2 rounded-full"
-            style={{ background: '#2D4260' }}
-            title="Unverified"
+            className={`h-2 w-2 rounded-full ${
+              backendStatus === 'online'
+                ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
+                : backendStatus === 'checking'
+                ? 'bg-slate-400 animate-pulse'
+                : 'bg-rose-500'
+            }`}
+            style={{
+              background:
+                backendStatus === 'online' ? '#10B981' : backendStatus === 'checking' ? '#94A3B8' : '#F43F5E',
+            }}
+            title={
+              backendStatus === 'online'
+                ? 'FastAPI Backend: Online · Connected'
+                : backendStatus === 'checking'
+                ? 'Checking backend connection'
+                : 'FastAPI Backend: Offline'
+            }
           />
         </div>
 

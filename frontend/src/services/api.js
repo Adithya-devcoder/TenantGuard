@@ -14,25 +14,47 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000
 export async function checkBackendConnection() {
   try {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 3000)
+    const timeoutId = setTimeout(() => controller.abort(), 4000)
 
-    // Attempt to probe the root or openapi endpoint
-    const response = await fetch(`${API_BASE_URL}/docs`, {
+    const response = await fetch(`${API_BASE_URL}/health`, {
       method: 'GET',
-      mode: 'no-cors',
+      headers: {
+        'Accept': 'application/json',
+      },
       signal: controller.signal,
     })
     clearTimeout(timeoutId)
-    return {
-      connected: true,
-      url: API_BASE_URL,
-      status: response.status || 200,
+
+    if (!response.ok) {
+      return {
+        connected: false,
+        url: API_BASE_URL,
+        status: response.status,
+        error: `HTTP ${response.status} ${response.statusText}`,
+      }
+    }
+
+    const data = await response.json()
+    if (data && data.status === 'ok') {
+      return {
+        connected: true,
+        url: API_BASE_URL,
+        status: data.status,
+        database: data.database || 'connected',
+      }
+    } else {
+      return {
+        connected: false,
+        url: API_BASE_URL,
+        status: data?.status || 'degraded',
+        error: `Unexpected backend status: ${data?.status || 'unknown'}`,
+      }
     }
   } catch (error) {
     return {
       connected: false,
       url: API_BASE_URL,
-      error: error.name === 'AbortError' ? 'Connection timed out (3s)' : error.message || 'Connection refused',
+      error: error.name === 'AbortError' ? 'Connection timed out (4s)' : error.message || 'Connection refused',
     }
   }
 }
@@ -142,4 +164,22 @@ export async function getScanReport(reportId) {
   return response.json()
 }
 
+/**
+ * Retrieves the most recent scan report
+ * Contract: GET /scanner/reports/latest
+ */
+export async function getLatestScanReport() {
+  const response = await fetch(`${API_BASE_URL}/scanner/reports/latest`, {
+    method: 'GET',
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || `Failed to retrieve latest scan report (${response.status})`)
+  }
+
+  return response.json()
+}
+
 export { API_BASE_URL }
+

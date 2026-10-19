@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   ArrowRight,
 } from 'lucide-react'
-import { getInvoices } from '../services/api'
+import { getInvoices, loginUser } from '../services/api'
 
 // Illustrative demo invoice data for structure visualization — not real database records
 const DEMO_INVOICES = [
@@ -70,15 +70,57 @@ export default function Workspaces() {
   const [loading, setLoading] = useState(false)
   const [fetchError, setFetchError] = useState(null)
   const [showDemoTable, setShowDemoTable] = useState(true)
+  const [liveSuccess, setLiveSuccess] = useState(null)
+  const [selectedTenant, setSelectedTenant] = useState('tenant_a') // 'tenant_a' | 'tenant_b'
+  const [liveData, setLiveData] = useState(null) // null | { tenantKey, tenantName, tenantId, username, boundaryPolicy, items }
 
-  const handleFetchLiveInvoices = async () => {
+  const handleSelectTenant = (tenantKey) => {
+    setSelectedTenant(tenantKey)
+    if (liveData) {
+      handleFetchLiveInvoices(tenantKey)
+    }
+  }
+
+  const handleFetchLiveInvoices = async (tenantKey = selectedTenant) => {
     setLoading(true)
     setFetchError(null)
+    setLiveSuccess(null)
     try {
-      await getInvoices()
+      const config = tenantKey === 'tenant_a'
+        ? {
+            username: 'tenant_a_user',
+            password: 'TenantA_demo_pw_2024',
+            tenantName: 'Tenant A (Acme Corp)',
+            tenantId: 1,
+            boundaryPolicy: 'Accessible to Tenant A only',
+          }
+        : {
+            username: 'tenant_b_user',
+            password: 'TenantB_demo_pw_2024',
+            tenantName: 'Tenant B (Globex Inc)',
+            tenantId: 2,
+            boundaryPolicy: 'Accessible to Tenant B only',
+          }
+
+      const auth = await loginUser(config.username, config.password)
+      if (!auth || !auth.access_token) {
+        throw new Error('No access token returned by authentication endpoint')
+      }
+      const response = await getInvoices(auth.access_token)
+      const items = response.items || []
+
+      setLiveData({
+        tenantKey,
+        tenantName: config.tenantName,
+        tenantId: config.tenantId,
+        username: auth.user?.username || config.username,
+        boundaryPolicy: config.boundaryPolicy,
+        items,
+      })
+      setLiveSuccess(`Live query successful! Authenticated as ${auth.user?.username || config.username} (${config.tenantName}, tenant_id=${config.tenantId}) and retrieved ${items.length} records.`)
     } catch (err) {
       setFetchError(
-        `Backend unreachable at http://127.0.0.1:8000 (${err.message || 'Connection refused'}). Live database query could not be completed.`
+        `Live query failed: ${err.message || 'Connection refused'}`
       )
     } finally {
       setLoading(false)
@@ -106,17 +148,56 @@ export default function Workspaces() {
           </p>
         </div>
 
-        <button
-          type="button"
-          id="query-live-invoices-btn"
-          onClick={handleFetchLiveInvoices}
-          disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-[13px] font-semibold transition-all duration-150 cursor-pointer flex-shrink-0 self-start"
-          style={{ background: loading ? '#94A3B8' : '#1D4ED8', boxShadow: '0 1px 3px rgba(29,78,216,0.25)' }}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Querying…' : 'Query Live Invoices'}
-        </button>
+        <div className="flex items-center gap-3 flex-wrap self-start">
+          {/* Tenant A / Tenant B Scope Selector */}
+          <div
+            className="inline-flex items-center p-1 rounded-lg"
+            style={{ background: '#F1F5F9', border: '1px solid #E2E8F0' }}
+            role="tablist"
+            aria-label="Select Tenant Scope"
+          >
+            <button
+              type="button"
+              id="select-tenant-a-btn"
+              onClick={() => handleSelectTenant('tenant_a')}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedTenant === 'tenant_a'
+                  ? 'bg-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              style={selectedTenant === 'tenant_a' ? { color: '#1D4ED8' } : {}}
+            >
+              <Key className="h-3.5 w-3.5" />
+              Tenant A (Acme)
+            </button>
+            <button
+              type="button"
+              id="select-tenant-b-btn"
+              onClick={() => handleSelectTenant('tenant_b')}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedTenant === 'tenant_b'
+                  ? 'bg-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              style={selectedTenant === 'tenant_b' ? { color: '#BE123C' } : {}}
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Tenant B (Globex)
+            </button>
+          </div>
+
+          <button
+            type="button"
+            id="query-live-invoices-btn"
+            onClick={() => handleFetchLiveInvoices(selectedTenant)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-[13px] font-semibold transition-all duration-150 cursor-pointer flex-shrink-0"
+            style={{ background: loading ? '#94A3B8' : '#1D4ED8', boxShadow: '0 1px 3px rgba(29,78,216,0.25)' }}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Querying...' : `Query Live Invoices (${selectedTenant === 'tenant_a' ? 'Tenant A' : 'Tenant B'})`}
+          </button>
+        </div>
       </div>
 
       {/* ─── Error Banner ─── */}
@@ -133,6 +214,18 @@ export default function Workspaces() {
               Start the FastAPI backend on port 8000 (
               <span className="font-mono">uvicorn app.main:app --reload</span>) to query live PostgreSQL records.
             </p>
+          </div>
+        </div>
+      )}
+      {liveSuccess && (
+        <div
+          className="p-4 rounded-xl flex items-start gap-3 text-[13px]"
+          style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46' }}
+        >
+          <ShieldCheck className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#059669' }} />
+          <div className="space-y-1">
+            <div className="font-semibold">Live Invoice Query Succeeded</div>
+            <p style={{ color: '#065F46' }}>{liveSuccess}</p>
           </div>
         </div>
       )}
@@ -296,12 +389,36 @@ export default function Workspaces() {
               Records evaluated during cross-tenant boundary verification tests.
             </p>
           </div>
-          <span
-            className="text-[11px] font-medium px-2.5 py-1 rounded-lg"
-            style={{ background: '#FFFBEB', color: '#92400E', border: '1px solid #FDE68A' }}
-          >
-            Illustrative records
-          </span>
+          {liveData ? (
+            <div className="flex items-center gap-2">
+              <span
+                id="table-status-badge"
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                style={{ background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live Backend Records ({liveData.tenantName})
+              </span>
+              <button
+                type="button"
+                id="reset-reference-records-btn"
+                onClick={() => { setLiveData(null); setLiveSuccess(null); }}
+                className="text-[11px] font-medium px-2 py-0.5 rounded cursor-pointer transition-colors"
+                style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#64748B' }}
+                title="Return to reference records"
+              >
+                Reset to Reference
+              </button>
+            </div>
+          ) : (
+            <span
+              id="table-status-badge"
+              className="text-[11px] font-medium px-2.5 py-1 rounded-lg"
+              style={{ background: '#FFFBEB', color: '#92400E', border: '1px solid #FDE68A' }}
+            >
+              Illustrative records
+            </span>
+          )}
         </div>
 
         {showDemoTable ? (
@@ -321,9 +438,8 @@ export default function Workspaces() {
                 </tr>
               </thead>
               <tbody>
-                {DEMO_INVOICES.map((inv, i) => {
-                  const statusStyle = STATUS_STYLE[inv.statusColor] || STATUS_STYLE.emerald
-                  return (
+                {liveData ? (
+                  liveData.items.map((inv, i) => (
                     <tr
                       key={inv.id}
                       style={{
@@ -335,40 +451,85 @@ export default function Workspaces() {
                         #{inv.id}
                       </td>
                       <td className="py-3.5 px-5">
-                        <div className="font-medium" style={{ color: '#0D1526' }}>{inv.tenant.split('(')[0].trim()}</div>
-                        <div className="text-[11px]" style={{ color: '#8A9BB0' }}>
-                          ({inv.tenant.match(/\(([^)]+)\)/)?.[1]})
+                        <div className="font-medium" style={{ color: '#0D1526' }}>{liveData.tenantName}</div>
+                        <div className="text-[11px] font-mono" style={{ color: '#8A9BB0' }}>
+                          ID: {liveData.tenantId} ({liveData.username})
                         </div>
                       </td>
-                      <td className="py-3.5 px-5" style={{ color: '#52637A' }}>
-                        {inv.customer}
+                      <td className="py-3.5 px-5 font-medium" style={{ color: '#0D1526' }}>
+                        {inv.description}
                       </td>
                       <td className="py-3.5 px-5 font-mono font-semibold" style={{ color: '#0D1526' }}>
-                        {inv.amount}
+                        ${Number(inv.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="py-3.5 px-5">
                         <span
                           className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                          style={{ background: statusStyle.bg, color: statusStyle.text, border: `1px solid ${statusStyle.border}` }}
+                          style={{ background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }}
                         >
-                          {inv.status}
+                          {inv.notes || 'Active'}
                         </span>
                       </td>
                       <td className="py-3.5 px-5">
                         <span
                           className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-lg"
-                          style={
-                            inv.isCallerOwned
-                              ? { background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }
-                              : { background: '#FFF1F2', color: '#9F1239', border: '1px solid #FECDD3' }
-                          }
+                          style={{ background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }}
                         >
-                          {inv.boundaryPolicy}
+                          {liveData.boundaryPolicy}
                         </span>
                       </td>
                     </tr>
-                  )
-                })}
+                  ))
+                ) : (
+                  DEMO_INVOICES.map((inv, i) => {
+                    const statusStyle = STATUS_STYLE[inv.statusColor] || STATUS_STYLE.emerald
+                    return (
+                      <tr
+                        key={inv.id}
+                        style={{
+                          borderBottom: '1px solid #EEF2F7',
+                          background: i % 2 === 1 ? '#FAFBFD' : '#FFFFFF',
+                        }}
+                      >
+                        <td className="py-3.5 px-5 font-mono font-semibold" style={{ color: '#0D1526' }}>
+                          #{inv.id}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <div className="font-medium" style={{ color: '#0D1526' }}>{inv.tenant.split('(')[0].trim()}</div>
+                          <div className="text-[11px]" style={{ color: '#8A9BB0' }}>
+                            ({inv.tenant.match(/\(([^)]+)\)/)?.[1]})
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-5" style={{ color: '#52637A' }}>
+                          {inv.customer}
+                        </td>
+                        <td className="py-3.5 px-5 font-mono font-semibold" style={{ color: '#0D1526' }}>
+                          {inv.amount}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span
+                            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                            style={{ background: statusStyle.bg, color: statusStyle.text, border: `1px solid ${statusStyle.border}` }}
+                          >
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span
+                            className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-lg"
+                            style={
+                              inv.isCallerOwned
+                                ? { background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0' }
+                                : { background: '#FFF1F2', color: '#9F1239', border: '1px solid #FECDD3' }
+                            }
+                          >
+                            {inv.boundaryPolicy}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>

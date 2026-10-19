@@ -23,7 +23,7 @@ const TEST_VECTORS = [
     endpoint: 'GET /invoices/101',
     method: 'GET',
     expectedCode: '200',
-    expectedLabel: 'ALLOW · 200 OK',
+    expectedLabel: 'ALLOW Â· 200 OK',
     expectedType: 'allow',
     description: 'Tenant A accesses their own invoice record. Verifies legitimate caller access is permitted.',
   },
@@ -34,7 +34,7 @@ const TEST_VECTORS = [
     endpoint: 'GET /invoices/202',
     method: 'GET',
     expectedCode: '403',
-    expectedLabel: 'DENY · 403 Forbidden',
+    expectedLabel: 'DENY Â· 403 Forbidden',
     expectedType: 'deny',
     description: 'Core BOLA test: Tenant A token attempts to read Tenant B\'s protected invoice. Must be blocked.',
   },
@@ -45,7 +45,7 @@ const TEST_VECTORS = [
     endpoint: 'GET /invoices',
     method: 'GET',
     expectedCode: '401',
-    expectedLabel: 'DENY · 401 Unauthorized',
+    expectedLabel: 'DENY Â· 401 Unauthorized',
     expectedType: 'deny',
     description: 'Baseline perimeter check: API must reject requests without a verified Bearer JWT token.',
   },
@@ -69,7 +69,7 @@ export default function Scanner() {
       setPreflightDetails(`Backend responded at ${result.url}`)
     } else {
       setPreflightStatus('offline')
-      setPreflightDetails(`Unable to reach ${result.url} — ${result.error}`)
+      setPreflightDetails(`Unable to reach ${result.url} â€” ${result.error}`)
     }
   }
 
@@ -81,10 +81,20 @@ export default function Scanner() {
     try {
       const response = await runSecurityScan({
         target_base_url: 'http://127.0.0.1:8000',
-        note: 'Live probe from TenantGuard frontend',
+        tenant_a_username: 'tenant_a_user',
+        tenant_a_password: import.meta.env.VITE_TENANT_A_PASSWORD || 'TenantA_demo_pw_2024',
+        tenant_b_username: 'tenant_b_user',
+        tenant_b_password: import.meta.env.VITE_TENANT_B_PASSWORD || 'TenantB_demo_pw_2024',
+        tenant_a_invoice_id: 101,
+        tenant_b_invoice_id: 202,
       })
       setScanStatus('completed')
       setScanResult(response)
+      if (response?.report_id) {
+        try {
+          sessionStorage.setItem('tenantguard_latest_report_id', response.report_id)
+        } catch (_) {}
+      }
     } catch (err) {
       setScanStatus('error')
       setScanError(
@@ -102,14 +112,14 @@ export default function Scanner() {
 
   const preflightBadge = {
     idle: { text: 'Not checked', bg: '#F8FAFC', color: '#8A9BB0', border: '#E1E7EF' },
-    checking: { text: 'Probing…', bg: '#EFF4FF', color: '#1D4ED8', border: '#BFDBFE' },
+    checking: { text: 'Probingâ€¦', bg: '#EFF4FF', color: '#1D4ED8', border: '#BFDBFE' },
     reachable: { text: 'Backend reachable', bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' },
     offline: { text: 'Backend offline', bg: '#FFF1F2', color: '#9F1239', border: '#FECDD3' },
   }[preflightStatus]
 
   return (
     <div className="space-y-5 pb-12">
-      {/* ─── Page Header ─── */}
+      {/* â”€â”€â”€ Page Header â”€â”€â”€ */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -150,12 +160,12 @@ export default function Scanner() {
             }}
           >
             <Play className={`h-3.5 w-3.5 fill-current ${scanStatus === 'running' ? 'animate-pulse' : ''}`} />
-            {scanStatus === 'running' ? 'Executing…' : 'Execute BOLA Scan'}
+            {scanStatus === 'running' ? 'Executingâ€¦' : 'Execute BOLA Scan'}
           </button>
         </div>
       </div>
 
-      {/* ─── Step 1: Preflight ─── */}
+      {/* â”€â”€â”€ Step 1: Preflight â”€â”€â”€ */}
       <div
         className="rounded-xl overflow-hidden"
         style={{ background: '#FFFFFF', border: '1px solid #E1E7EF', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
@@ -198,7 +208,7 @@ export default function Scanner() {
             }}
           >
             <Radio className={`h-3.5 w-3.5 ${preflightStatus === 'checking' ? 'animate-spin' : ''}`} style={{ color: '#52637A' }} />
-            {preflightStatus === 'checking' ? 'Testing connection…' : 'Check Connectivity'}
+            {preflightStatus === 'checking' ? 'Testing connectionâ€¦' : 'Check Connectivity'}
           </button>
         </div>
 
@@ -221,7 +231,7 @@ export default function Scanner() {
         </div>
       </div>
 
-      {/* ─── Step 2: Test Plan ─── */}
+      {/* â”€â”€â”€ Step 2: Test Plan â”€â”€â”€ */}
       <div
         className="rounded-xl overflow-hidden"
         style={{ background: '#FFFFFF', border: '1px solid #E1E7EF', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
@@ -313,7 +323,7 @@ export default function Scanner() {
         </div>
       </div>
 
-      {/* ─── Step 3: Scan Execution ─── */}
+      {/* â”€â”€â”€ Step 3: Scan Execution â”€â”€â”€ */}
       <div
         className="rounded-xl overflow-hidden"
         style={{ background: '#FFFFFF', border: '1px solid #E1E7EF', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
@@ -345,7 +355,7 @@ export default function Scanner() {
         </div>
 
         <div className="p-6">
-          {/* ─ Idle ─ */}
+          {/* â”€ Idle â”€ */}
           {scanStatus === 'idle' && (
             <div
               className="rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -372,7 +382,7 @@ export default function Scanner() {
             </div>
           )}
 
-          {/* ─ Running ─ */}
+          {/* â”€ Running â”€ */}
           {scanStatus === 'running' && (
             <div
               className="rounded-xl p-6 flex items-start gap-4"
@@ -381,18 +391,18 @@ export default function Scanner() {
               <Loader2 className="h-5 w-5 animate-spin flex-shrink-0 mt-0.5" style={{ color: '#1D4ED8' }} />
               <div>
                 <div className="text-[14px] font-semibold mb-1" style={{ color: '#1E3A8A' }}>
-                  Executing Live Scan Probe…
+                  Executing Live Scan Probeâ€¦
                 </div>
                 <p className="text-[12px]" style={{ color: '#3B5EA6' }}>
                   Sending request to{' '}
                   <span className="font-mono">POST /scanner/scan</span> at{' '}
-                  <span className="font-mono">http://127.0.0.1:8000</span>. Please wait…
+                  <span className="font-mono">http://127.0.0.1:8000</span>. Please waitâ€¦
                 </p>
               </div>
             </div>
           )}
 
-          {/* ─ Error ─ */}
+          {/* â”€ Error â”€ */}
           {scanStatus === 'error' && (
             <div
               className="rounded-xl p-6 space-y-4"
@@ -402,7 +412,7 @@ export default function Scanner() {
                 <ShieldAlert className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#DC2626' }} />
                 <div>
                   <div className="text-[14px] font-semibold mb-1" style={{ color: '#7F1D1D' }}>
-                    Scan Execution Halted — Backend Unreachable
+                    Scan Execution Halted â€” Backend Unreachable
                   </div>
                   <p className="text-[12px] leading-relaxed" style={{ color: '#9F1239' }}>
                     {scanError}
@@ -435,7 +445,7 @@ export default function Scanner() {
             </div>
           )}
 
-          {/* ─ Completed ─ */}
+          {/* â”€ Completed â”€ */}
           {scanStatus === 'completed' && scanResult && (
             <div
               className="rounded-xl p-6 space-y-4"
@@ -457,7 +467,7 @@ export default function Scanner() {
               <div className="flex items-center gap-2.5 pt-2" style={{ borderTop: '1px solid #A7F3D0' }}>
                 <button
                   type="button"
-                  onClick={() => navigate('/results')}
+                  onClick={() => navigate('/results', { state: { scanResult } })}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-[13px] font-semibold cursor-pointer"
                   style={{ background: '#059669' }}
                 >
