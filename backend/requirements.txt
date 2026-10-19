@@ -1,0 +1,23 @@
+# ── Web framework ────────────────────────────────────────────────────────────
+fastapi==0.133.1
+uvicorn[standard]==0.41.0
+
+# ── Database ─────────────────────────────────────────────────────────────────
+sqlalchemy==2.1.5               # updated from 2.0.36 to match installed version
+psycopg[binary]==3.2.3          # PostgreSQL 18 adapter (psycopg3); now installed
+# SQLite is built-in and used as the local-dev fallback (DATABASE_URL=sqlite:///./demo.db)
+
+# ── Validation / Settings ────────────────────────────────────────────────────
+pydantic==2.13.4
+pydantic-settings==2.13.1
+
+# ── Authentication ────────────────────────────────────────────────────────────
+PyJWT==2.13.0                   # JWT sign / verify
+bcrypt==5.0.0                   # Password hashing (direct API — passlib 1.7.4 is incompatible with bcrypt>=4)
+
+# ── HTTP client (used by scanner) ─────────────────────────────────────────────
+httpx==0.28.1
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+pytest==8.3.4
+# Tests use FastAPI's synchronous TestClient — no async runner needed.
